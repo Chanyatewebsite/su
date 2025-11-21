@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SUPER BOOST MM | Wallet System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Padauk:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- General Styles --- */
+        body { margin: 0; font-family: 'Padauk', sans-serif; background-color: #f4f6f8; }
+        .text-center { text-align: center; }
+        
+        /* Header & Logo */
+        .header { background: #1e3a8a; /* Dark Blue */ padding: 15px 20px; color: #ffc107; display: flex; justify-content: space-between; align-items: center; }
+        .logo img { height: 35px; vertical-align: middle; }
+        
+        /* Containers & Cards */
+        .container { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: calc(100vh - 65px); 
+            padding: 20px; 
+            flex-direction: column; 
+            box-sizing: border-box;
+        }
+        .card { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+            width: 100%; 
+            max-width: 450px; 
+            margin: 0; 
+        }
+        
+        /* Forms & Buttons */
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        label { font-weight: bold; display: block; margin-top: 10px; color: #333; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 1rem; margin-top: 15px; }
+        .btn-primary { background: #1e3a8a; color: white; }
+        .btn-admin { 
+            background: white; 
+            color: #0d6efd; /* Blue */
+            border: 2px solid #0d6efd; 
+            display: block; 
+            text-align: center; 
+            text-decoration: none; 
+            box-sizing: border-box; 
+            margin-top: 20px;
+            padding: 12px;
+            border-radius: 5px;
+            width: 100%;
+            max-width: 450px;
+            cursor: pointer;
+        }
+        .divider { margin: 20px 0; border-top: 1px solid #ddd; position: relative; width: 100%; max-width: 450px; }
+        .divider span { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: white; padding: 0 10px; color: #777; font-size: 12px; }
+
+        /* Wallet Display */
+        .balance-box { 
+            background: white; 
+            color: #1e3a8a; 
+            padding: 15px; 
+            border-radius: 8px; 
+            margin-bottom: 20px; 
+            font-size: 1.1rem; 
+            font-weight: bold; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border: 2px solid #ffc107; /* Yellow Border */
+        }
+        .price-tag { font-size: 1.5rem; color: #1e3a8a; font-weight: bold; display: block; text-align: center; margin: 10px 0; }
+        
+        /* --- Admin Specific Styles --- */
+        #admin-view { display: none; }
+        #dashboard { display: none; padding: 20px; }
+        
+        /* Tabs for Dashboard */
+        .dashboard-nav { display: flex; border-bottom: 2px solid #ccc; margin-bottom: 20px; }
+        .dashboard-nav button {
+            background: none; border: none; padding: 10px 15px; cursor: pointer; 
+            font-weight: bold; font-size: 0.9rem; color: #666; transition: all 0.3s;
+        }
+        .dashboard-nav button.active {
+            color: #1e3a8a; border-bottom: 3px solid #ffc107; margin-bottom: -2px;
+        }
+
+        .dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: #1e3a8a; /* Dark Blue */ color: white; padding: 10px 20px; border-radius: 8px 8px 0 0; }
+        .table-wrapper { overflow-x: auto; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); padding: 10px; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; min-width: 800px; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; font-size: 0.95rem; }
+        th { background: #162a47; color: white; }
+        
+        /* Modals */
+        .modal {
+            display: none; position: fixed; z-index: 10; left: 0; top: 0; width: 100%; height: 100%; 
+            overflow: auto; background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe; margin: 5% auto; padding: 20px; border: 1px solid #888; 
+            width: 90%; max-width: 800px; border-radius: 10px; position: relative;
+        }
+        .close-btn { color: #aaa; float: right; font-size: 28px; font-weight: bold; }
+        .close-btn:hover, .close-btn:focus { color: black; text-decoration: none; cursor: pointer; }
+        .package-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px dotted #eee; }
+        .package-item:last-child { border-bottom: none; }
+    </style>
+</head>
+<body>
+
+    <div class="header" id="main-header">
+        <div class="logo">
+            <h3 style="margin:0; color:#ffc107;">SUPER BOOST MM</h3>
+        </div>
+        <button onclick="currentView === 'customer' ? logout() : adminLogout()" id="logout-btn" style="display:none; background:none; border:1px solid #ffc107; color:#ffc107; padding:5px 10px; border-radius:4px; cursor:pointer;">
+            <i class="fas fa-sign-out-alt"></i> ထွက်မည်
+        </button>
+    </div>
+
+    <div id="customer-view">
+        <div class="container">
+            
+            <div class="card text-center" id="login-box">
+                <h3 class="text-center">အကောင့်ဝင်ရန် (Login)</h3>
+                <form onsubmit="event.preventDefault(); customerLogin();">
+                    <label>Username</label>
+                    <input type="text" id="l-user" placeholder="Username" required>
+                    <label>Password</label>
+                    <input type="password" id="l-pass" placeholder="Password" required>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-sign-in-alt"></i> ဝင်မည်
+                    </button>
+                </form>
+                <div class="divider"><span>OR</span></div>
+                <button class="btn" style="background:#007bff; color:white;" onclick="showRegister()">
+                    အကောင့်အသစ် ဖွင့်မည်
+                </button>
+            </div>
+            
+            <div class="card text-center" id="register-box" style="display:none;">
+                <h3 class="text-center">အကောင့်ဖွင့်ရန် (Register)</h3>
+                <form onsubmit="event.preventDefault(); register();">
+                    <label>Username</label>
+                    <input type="text" id="r-user" placeholder="Username" required>
+                    <label>Password</label>
+                    <input type="password" id="r-pass" placeholder="Password" required>
+                    <label>ဖုန်းနံပါတ်</label>
+                    <input type="tel" id="r-phone" placeholder="09-xxxxxxxxx" required>
+                    <button type="submit" class="btn btn-primary" style="background:#28a745;">
+                        <i class="fas fa-user-plus"></i> အကောင့်ဖွင့်မည်
+                    </button>
+                </form>
+                <div class="divider"><span>OR</span></div>
+                <button class="btn" style="background:#6c757d; color:white;" onclick="showLogin()">
+                    အကောင့်ဝင်ရန် ပြန်သွားမည်
+                </button>
+            </div>
+
+            <div id="customer-main" style="display:none; width:100%; max-width: 450px;">
+                
+                <div class="balance-box">
+                    <span>လက်ကျန်ငွေ (Balance):</span>
+                    <span id="current-balance" style="color:#1e3a8a;">0 Ks</span>
+                </div>
+
+                <div class="card" id="order-section" style="display:block;">
+                    <h3 id="welcome-txt" class="text-center">Boost Order တင်ရန်</h3>
+                    <form onsubmit="handleOrder(event)">
+                        <label>Service ရွေးပါ</label>
+                        <select id="platform" onchange="updatePkg()"></select>
+                        <label>Package ရွေးပါ</label>
+                        <select id="package" onchange="updatePrice()" disabled></select>
+                        <label>Link ထည့်ပါ</label>
+                        <input type="url" id="link" placeholder="https://facebook.com/..." required>
+
+                        <div style="text-align:center; margin:10px 0;">
+                            <span>ကျသင့်ငွေ (Total Amount)</span><br>
+                            <span id="price" class="price-tag">0 Ks</span>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary" style="background:#198754; color:white;">
+                            Order Now 🚀
+                        </button>
+                    </form>
+                    <div class="divider"><span>OR</span></div>
+                    <button class="btn btn-primary" onclick="showTopupView()">
+                        <i class="fas fa-wallet"></i> ငွေဖြည့်သွင်းရန် (Top-up)
+                    </button>
+                </div>
+                
+                <div class="card" id="topup-box" style="display:none;">
+                    <h3 class="text-center">ငွေဖြည့်သွင်းရန် တောင်းဆိုမှု</h3>
+                    <div class="payment-box">
+                        <p><strong>KBZPay:</strong> 09-123 456 789 (Mg Mg)</p>
+                        <p><strong>WavePay:</strong> 09-987 654 321 (Mg Mg)</p>
+                        <hr>
+                        
+                        <label>ငွေဘယ်လောက် ဖြည့်မလဲ?</label>
+                        <input type="number" id="topup-amount" placeholder="အနည်းဆုံး 5000 Ks" required min="100">
+
+                        <label style="color:#d32f2f;">ပြေစာ (Receipt/Screenshot Reference Link/ID)</label>
+                        <input type="text" id="receipt-proof" placeholder="ပြေစာရဲ့ Link သို့မဟုတ် Reference Code ထည့်ပါ" required>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="submitTopup()">
+                        <i class="fas fa-paper-plane"></i> Top-up တောင်းဆိုမည်
+                    </button>
+                    <button class="btn" style="background:#6c757d; margin-top:10px; color:white;" onclick="showOrderView()">
+                        <i class="fas fa-arrow-left"></i> နောက်သို့
+                    </button>
+                </div>
+
+            </div>
+            
+            <div class="divider"><span>Admin Only</span></div>
+            <a class="btn-admin" onclick="showAdminView(); return false;">
+                <i class="fas fa-user-shield"></i> Go to Admin Panel
+            </a>
+
+        </div>
+    </div>
+
+
+    <div id="admin-view" style="display:none;">
+        <div class="container" id="admin-login-container"> 
+            <div class="card text-center">
+                <h3 class="text-center">Admin ဝင်ရန်</h3>
+                <form onsubmit="event.preventDefault(); adminLogin();">
+                    <label>Username</label>
+                    <input type="text" id="admin-user" placeholder="A" required>
+                    <label>Password</label>
+                    <input type="password" id="admin-pass" placeholder="A" required>
+                    <button type="submit" class="btn btn-primary" style="background:#0d6efd;">
+                        <i class="fas fa-user-shield"></i> Admin ဝင်မည်
+                    </button>
+                </form>
+                <div class="divider"><span>OR</span></div>
+                <button class="btn" style="background:#6c757d; color:white;" onclick="showCustomerView()">
+                    <i class="fas fa-arrow-left"></i> User Panel သို့ ပြန်သွားမည်
+                </button>
+            </div>
+        </div>
+        
+        <div id="dashboard">
+            <div class="dashboard-header">
+                <h3 style="margin:0; color:white;">SUPER BOOST MM</h3>
+                <button onclick="adminLogout()" style="padding:8px 15px; cursor:pointer; background:#fff; border:1px solid #ccc; color:#1e3a8a;">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+
+            <div class="dashboard-nav">
+                <button id="user-tab" onclick="showAdminTab('users')">
+                    <i class="fas fa-users"></i> User Management
+                </button>
+                <button id="order-tab" class="active" onclick="showAdminTab('orders')">
+                    <i class="fas fa-list-alt"></i> Orders & Topups
+                </button>
+                <button id="service-tab" onclick="showAdminTab('services')">
+                    <i class="fas fa-cogs"></i> Service Management
+                </button>
+            </div>
+            
+            <div id="users-tab-content" style="display: none;">
+                <h3 style="color:#1e3a8a; margin-top:20px;">👤 Customer Account စာရင်း</h3>
+                <div class="table-wrapper">
+                    <table style="min-width: 900px;">
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Password</th>
+                                <th>Phone</th>
+                                <th>Balance</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="user-table-body">
+                            </tbody>
+                    </table>
+                </div>
+            </div> <div id="orders-tab-content">
+                <h3 style="color:#d32f2f; margin-top:20px;">💰 Pending Top-up Requests</h3>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Amount</th>
+                                <th>Receipt Proof</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="topup-table-body">
+                            </tbody>
+                    </table>
+                </div>
+
+                <h3 style="color:#1e3a8a; margin-top:30px;">🛒 Sales Orders</h3>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date/ID</th>
+                                <th>Customer</th>
+                                <th>Service & Price</th>
+                                <th>Link</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="order-table-body">
+                            </tbody>
+                    </table>
+                </div>
+            </div> <div id="services-tab-content" style="display: none;">
+                <h3 style="color:#1e3a8a; margin-top:20px;">Service & Package စီမံခန့်ခွဲမှု</h3>
+                
+                <button class="btn" style="width:auto; background:#198754; color:white; margin-bottom:15px;" onclick="showServiceForm()">
+                    <i class="fas fa-plus-circle"></i> Add New Service
+                </button>
+
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Service Name</th>
+                                <th>Packages Count</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="service-table-body">
+                            </tbody>
+                    </table>
+                </div>
+            </div> <div id="service-modal" class="modal">
+                <div class="modal-content">
+                    <span class="close-btn" onclick="closeServiceModal()">&times;</span>
+                    <h3 id="service-modal-title">Service အသစ်ထည့်ရန်</h3>
+                    <form onsubmit="handleServiceForm(event)">
+                        <label for="service-name">Service Name (e.g., Facebook, TikTok)</label>
+                        <input type="text" id="service-name" required>
+                        <input type="hidden" id="original-service-name">
+                        <button type="submit" class="btn btn-primary" id="service-submit-btn">Save Service</button>
+                    </form>
+                </div>
+            </div>
+
+            <div id="package-modal" class="modal">
+                <div class="modal-content">
+                    <span class="close-btn" onclick="closePackageModal()">&times;</span>
+                    <h3 id="package-modal-title"></h3>
+                    <h4>လက်ရှိ Packages များ</h4>
+                    <div id="packages-list"></div>
+                    <hr>
+                    <h4>Package အသစ်ထည့်ရန်</h4>
+                    <form onsubmit="addPackage(event)">
+                        <label for="package-name">Package Name (e.g., 1K Followers)</label>
+                        <input type="text" id="package-name" required>
+                        <label for="package-price">Price (Ks)</label>
+                        <input type="number" id="package-price" required min="100">
+                        <button type="submit" class="btn btn-primary" style="background:#0d6efd; color:white;">
+                            <i class="fas fa-plus"></i> Add Package
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <div id="edit-package-modal" class="modal">
+                <div class="modal-content">
+                    <span class="close-btn" onclick="closeEditPackageModal()">&times;</span>
+                    <h3>Package ပြင်ဆင်ရန်</h3>
+                    <form onsubmit="saveEditedPackage(event)">
+                        <input type="hidden" id="edit-service-name">
+                        <input type="hidden" id="edit-package-index">
+                        <input type="hidden" id="edit-original-uuid">
+                        
+                        <label for="edit-package-uuid">Package ID (Unique Identifier)</label>
+                        <input type="text" id="edit-package-uuid" required>
+
+                        <label for="edit-package-name">Package Name</label>
+                        <input type="text" id="edit-package-name" required>
+                        
+                        <label for="edit-package-price">Price (Ks)</label>
+                        <input type="number" id="edit-package-price" required min="100">
+                        
+                        <button type="submit" class="btn btn-primary" style="background:#1e3a8a;">
+                            <i class="fas fa-save"></i> Save Changes
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div id="user-history-modal" class="modal">
+                <div class="modal-content">
+                    <span class="close-btn" onclick="closeUserHistoryModal()">&times;</span>
+                    <h3 id="history-modal-title" style="color:#1e3a8a;"></h3>
+                    
+                    <h4 style="color:#d32f2f;">ငွေဖြည့်သွင်းမှု မှတ်တမ်း (Top-ups)</h4>
+                    <div class="table-wrapper">
+                        <table id="user-topup-table"></table>
+                    </div>
+
+                    <h4 style="color:#198754;">Order တင်မှု မှတ်တမ်း (Orders)</h4>
+                    <div class="table-wrapper">
+                        <table id="user-order-table"></table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // --- DATA STRUCTURE & GLOBALS ---
+        let currentView = 'customer';
+        const STORAGE_USERS = 'super_users';
+        const STORAGE_ORDERS = 'super_orders';
+        const STORAGE_TOPUPS = 'super_topups';
+        const STORAGE_PACKAGES = 'super_packages';
+        
+        let pkgs = JSON.parse(localStorage.getItem(STORAGE_PACKAGES)) || {
+            Facebook: [{n:"1K Likes",p:5000, id: generateUUID()}, {n:"5K Likes",p:22000, id: generateUUID()}],
+            Instagram: [{n:"1K Followers",p:8000, id: generateUUID()}, {n:"5K Followers",p:35000, id: generateUUID()}],
+            TikTok: [{n:"10K Views",p:8000, id: generateUUID()}, {n:"1K Followers",p:15000, id: generateUUID()}]
+        };
+
+        const pSelect = document.getElementById('package');
+        const platformSelect = document.getElementById('platform');
+        const priceSpan = document.getElementById('price');
+        
+        let currentServiceToManage = null; 
+        
+        // Helper function for unique IDs (UUID-like, simplified)
+        function generateUUID() {
+             return 'xxxx-4xxx-yxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        // --- View Switching Functions ---
+        
+        function updateLogoutButton(view) {
+            const logoutBtn = document.getElementById('logout-btn');
+            const userLoggedIn = localStorage.getItem('super_user');
+            const adminLoggedIn = localStorage.getItem('admin_logged_in') === 'true';
+
+            if ((view === 'customer' && userLoggedIn) || (view === 'admin' && adminLoggedIn)) {
+                logoutBtn.style.display = 'block';
+            } else {
+                logoutBtn.style.display = 'none';
+            }
+        }
+
+        function showCustomerView() {
+            currentView = 'customer';
+            document.getElementById('admin-view').style.display = 'none';
+            document.getElementById('customer-view').style.display = 'block';
+            
+            const user = JSON.parse(localStorage.getItem('super_user'));
+            if (user) {
+                const users = JSON.parse(localStorage.getItem(STORAGE_USERS)) || [];
+                const latestUser = users.find(u => u.u === user.u);
+                
+                if (latestUser) {
+                     localStorage.setItem('super_user', JSON.stringify(latestUser)); 
+                     showCustomerMain(latestUser);
+                } else {
+                     logout(); 
+                }
+            } else {
+                showLogin();
+                document.getElementById('customer-main').style.display = 'none';
+            }
+             updateLogoutButton(currentView);
+        }
+        
+        function showAdminView() {
+            currentView = 'admin';
+            document.getElementById('customer-view').style.display = 'none';
+            document.getElementById('admin-view').style.display = 'block';
+            
+            if (localStorage.getItem('admin_logged_in') === 'true') {
+                showDashboard();
+            } else {
+                document.getElementById('admin-login-container').style.display = 'flex';
+                document.getElementById('dashboard').style.display = 'none';
+            }
+            updateLogoutButton(currentView);
+        }
+        
+        // --- Customer Auth & Order Functions ---
+        
+        function showRegister() {
+            document.getElementById('login-box').style.display = 'none';
+            document.getElementById('register-box').style.display = 'block';
+        }
+
+        function showLogin() {
+            document.getElementById('login-box').style.display = 'block';
+            document.getElementById('register-box').style.display = 'none';
+        }
+
+        function register(){
+            const u = document.getElementById('r-user').value, p = document.getElementById('r-pass').value, ph = document.getElementById('r-phone').value;
+            if(!u || !p || !ph) return alert("အချက်အလက် ပြည့်စုံစွာ ဖြည့်ပါ");
+            let users = JSON.parse(localStorage.getItem(STORAGE_USERS)) || [];
+            
+            if(users.some(user => user.u === u)) {
+                return alert("ဤ Username သည် ရှိပြီးသားဖြစ်ပါသည်။ တခြား Username ရွေးပါ။");
+            }
+            
+            users.push({u, p, ph, balance: 0}); 
+            localStorage.setItem(STORAGE_USERS, JSON.stringify(users));
+            alert("အကောင့်ဖွင့်ခြင်း အောင်မြင်သည်! Login ဝင်ပါ။"); 
+            showLogin();
+            document.getElementById('r-user').value = ''; 
+            document.getElementById('r-pass').value = '';
+            document.getElementById('r-phone').value = '';
+        }
+
+        function customerLogin(){
+            const u = document.getElementById('l-user').value, p = document.getElementById('l-pass').value;
+            let users = JSON.parse(localStorage.getItem(STORAGE_USERS)) || [];
+            const found = users.find(user => user.u === u && user.p === p);
+            if(found) { 
+                localStorage.setItem('super_user', JSON.stringify(found)); 
+                showCustomerMain(found); 
+            } else alert("Username သို့မဟုတ် Password မှားယွင်းနေပါသည်!");
+            document.getElementById('l-user').value = ''; 
+            document.getElementById('l-pass').value = '';
+        }
+        
+        function logout() { 
+            localStorage.removeItem('super_user'); 
+            showCustomerView(); 
+        }
+
+        function showCustomerMain(user){
+            document.getElementById('login-box').style.display='none';
+            document.getElementById('register-box').style.display='none';
+            document.getElementById('customer-main').style.display='block';
+            document.getElementById('welcome-txt').innerHTML = `မင်္ဂလာပါ <span style="color:#ffc107">${user.u}</span>`;
+            updateBalanceDisplay(user.balance); 
+            showOrderView(); 
+            updateLogoutButton(currentView);
+        }
+
+        function showOrderView() {
+            document.getElementById('topup-box').style.display = 'none';
+            document.getElementById('order-section').style.display = 'block';
+        }
+        
+        function showTopupView() {
+            document.getElementById('order-section').style.display = 'none';
+            document.getElementById('topup-box').style.display = 'block';
+        }
+        
+        // --- Wallet & Order Logic ---
+
+        function updateBalanceDisplay(balance) {
+            document.getElementById('current-balance').innerText = balance.toLocaleString() + ' Ks';
+            
+            let user = JSON.parse(localStorage.getItem('super_user'));
+            if(user) {
+                user.balance = balance;
+                localStorage.setItem('super_user', JSON.stringify(user));
+            }
+        }
+        
+        function updateUserBalanceInStorage(username, newBalance) {
+            let users = JSON.parse(localStorage.getItem(STORAGE_USERS));
+            let userIndex = users.findIndex(u => u.u === username);
+            if (userIndex !== -1) {
+                users[userIndex].balance = newBalance;
+                localStorage.setItem(STORAGE_USERS, JSON.stringify(users));
+                
+                let currentUser = JSON.parse(localStorage.getItem('super_user'));
+                if(currentUser && currentUser.u === username) {
+                     currentUser.balance = newBalance;
+                     localStorage.setItem('super_user', JSON.stringify(currentUser));
+                }
+            }
+        }
+
+        function handleOrder(e){
+            e.preventDefault();
+            const user = JSON.parse(localStorage.getItem('super_user'));
+            const pkgVal = pSelect.value;
+            const price = parseInt(pkgVal);
+            const link = document.getElementById('link').value;
+            
+            if (!user) return alert("Order တင်ရန် Login ဝင်ရန်လိုအပ်ပါသည်။");
+            if (!link) return alert("Link မဖြစ်မနေ ထည့်ရန်လိုအပ်ပါသည်။");
+            if(pkgVal == "0") return alert("ကျေးဇူးပြု၍ Package ရွေးချယ်ပါ။");
+            
+            if (user.balance < price) {
+                return alert(`❌ Wallet ထဲတွင် ငွေမလုံလောက်ပါ! (လိုငွေ: ${(price - user.balance).toLocaleString()} Ks)`);
+            }
+
+            const pkgName = pSelect.options[pSelect.selectedIndex].getAttribute('data-name');
+            const pkgId = pSelect.options[pSelect.selectedIndex].getAttribute('data-id');
+            
+            let newBalance = user.balance - price;
+            updateUserBalanceInStorage(user.u, newBalance);
+            updateBalanceDisplay(newBalance); 
+            
+            let orders = JSON.parse(localStorage.getItem(STORAGE_ORDERS)) || [];
+            orders.push({
+                id: Date.now(), user: user.u, phone: user.ph, desc: `${document.getElementById('platform').value} - ${pkgName} (${pkgId})`, 
+                price: price.toLocaleString() + ' Ks', link: link, status: "Completed (Deducted)"
+            });
+            localStorage.setItem(STORAGE_ORDERS, JSON.stringify(orders));
+            
+            alert("✅ Order တင်ခြင်း အောင်မြင်ပြီး ငွေဖြတ်တောက်ပြီးပါပြီ!");
+            
+            // Reset Form Fields
+            document.getElementById('platform').value = ''; 
+            pSelect.innerHTML = '<option value="0">Package ရွေးပါ</option>';
+            pSelect.disabled = true;
+            priceSpan.innerText = "0 Ks";
+            document.getElementById('link').value = '';
+        }
+        
+        function submitTopup() {
+            const amount = parseInt(document.getElementById('topup-amount').value);
+            const proof = document.getElementById('receipt-proof').value;
+            const user = JSON.parse(localStorage.getItem('super_user'));
+
+            if (isNaN(amount) || amount < 100) return alert("ကျေးဇူးပြု၍ မှန်ကန်သော ငွေပမာဏ ဖြည့်ပါ!");
+            if (!proof) return alert("ပြေစာ သို့မဟုတ် Reference Code မဖြစ်မနေ ထည့်ရန်လိုအပ်ပါသည်!");
+            
+            if (!user) return alert("Login ဝင်ရန်လိုအပ်ပါသည်။");
+
+            let topups = JSON.parse(localStorage.getItem(STORAGE_TOPUPS)) || [];
+            topups.push({
+                id: Date.now(),
+                user: user.u,
+                amount: amount,
+                proof: proof,
+                status: "Pending"
+            });
+            localStorage.setItem(STORAGE_TOPUPS, JSON.stringify(topups));
+
+            alert(`✅ ${amount.toLocaleString()} Ks ဖြည့်ရန် တောင်းဆိုမှု အောင်မြင်ပါပြီ။ Admin မှ ခဏအကြာတွင် စစ်ဆေးအတည်ပြုပေးပါမည်။`);
+            showOrderView();
+            document.getElementById('topup-amount').value = '';
+            document.getElementById('receipt-proof').value = '';
+        }
+
+        // --- Select Box Logic ---
+        
+        function initPlatformSelect() {
+            pkgs = JSON.parse(localStorage.getItem(STORAGE_PACKAGES)) || pkgs; // Reload from storage
+            let options = '<option value="">Service ရွေးပါ</option>';
+            for (const platform in pkgs) {
+                options += `<option value="${platform}">${platform}</option>`;
+            }
+            platformSelect.innerHTML = options;
+            pSelect.innerHTML = '<option value="0">Package ရွေးပါ</option>';
+        }
+
+        function updatePkg() {
+            const platform = platformSelect.value;
+            pSelect.innerHTML = '<option value="0">Package ရွေးပါ</option>';
+            pSelect.disabled = true;
+            priceSpan.innerText = "0 Ks";
+            
+            if (platform && pkgs[platform]) {
+                let options = '<option value="0">Package ရွေးပါ</option>';
+                pkgs[platform].forEach(pkg => {
+                    options += `<option value="${pkg.p}" data-name="${pkg.n}" data-id="${pkg.id}">${pkg.n} (${pkg.p.toLocaleString()} Ks)</option>`;
+                });
+                pSelect.innerHTML = options;
+                pSelect.disabled = false;
+            }
+        }
+
+        function updatePrice() {
+            const price = parseInt(pSelect.value);
+            priceSpan.innerText = (price > 0 ? price.toLocaleString() : "0") + ' Ks';
+        }
+        
+        // --- Admin Auth & Dashboard Logic ---
+        
+        function adminLogin() {
+            const u = document.getElementById('admin-user').value;
+            const p = document.getElementById('admin-pass').value;
+            
+            const ADMIN_USER = "Admin12345"; 
+            const ADMIN_PASS = "Admin1234";
+
+            if(u === ADMIN_USER && p === ADMIN_PASS) {
+                localStorage.setItem('admin_logged_in', 'true');
+                showDashboard();
+            } else { 
+                alert("Username သို့မဟုတ် Password မှားယွင်းနေပါသည်!"); 
+            }
+        }
+
+        function adminLogout() {
+            localStorage.removeItem('admin_logged_in');
+            document.getElementById('dashboard').style.display = 'none';
+            document.getElementById('admin-login-container').style.display = 'flex';
+            currentView = 'admin'; 
+            updateLogoutButton(currentView);
+            showCustomerView(); 
+        }
+
+        function showDashboard() {
+            document.getElementById('admin-login-container').style.display = "none";
+            document.getElementById('dashboard').style.display = "block";
+            showAdminTab('orders'); 
+        }
+        
+        function showAdminTab(tabName) {
+            document.getElementById('orders-tab-content').style.display = 'none';
+            document.getElementById('services-tab-content').style.display = 'none';
+            document.getElementById('users-tab-content').style.display = 'none'; 
+            
+            document.getElementById('order-tab').classList.remove('active');
+            document.getElementById('service-tab').classList.remove('active');
+            document.getElementById('user-tab').classList.remove('active');
+
+            if (tabName === 'orders') {
+                document.getElementById('orders-tab-content').style.display = 'block';
+                document.getElementById('order-tab').classList.add('active');
+                loadAdminData();
+            } else if (tabName === 'services') {
+                document.getElementById('services-tab-content').style.display = 'block';
+                document.getElementById('service-tab').classList.add('active');
+                loadServiceTable();
+            } else if (tabName === 'users') { 
+                document.getElementById('users-tab-content').style.display = 'block';
+                document.getElementById('user-tab').classList.add('active');
+                loadUserTable();
+            }
+        }
+
+        function loadAdminData() {
+            loadTopupRequests();
+            loadSalesOrders();
+        }
+        
+        // --- User Management Logic (Buttons work) ---
+        function loadUserTable() {
+            const tbody = document.getElementById('user-table-body');
+            tbody.innerHTML = "";
+            const users = JSON.parse(localStorage.getItem(STORAGE_USERS)) || [];
+
+            if(users.length === 0) {
+                tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:10px;'>Customer Account မရှိသေးပါ</td></tr>";
+                return;
+            }
+
+            users.forEach((u) => {
+                const row = `
+                    <tr>
+                        <td><b>${u.u}</b></td>
+                        <td>${u.p}</td> 
+                        <td>${u.ph}</td>
+                        <td><b>${u.balance.toLocaleString()} Ks</b></td>
+                        <td>
+                            <button onclick="showUserHistory('${u.u}')" style="color:#0d6efd; cursor:pointer; background:none; border:1px solid #0d6efd; padding:5px; margin-right:5px;">
+                                <i class="fas fa-history"></i> History
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+        
+        function showUserHistory(username) { // Works
+            document.getElementById('history-modal-title').innerText = `"${username}" ၏ မှတ်တမ်းများ`;
+            
+            const allTopups = JSON.parse(localStorage.getItem(STORAGE_TOPUPS)) || [];
+            const userTopups = allTopups.filter(t => t.user === username).reverse();
+            renderUserTopupTable(userTopups);
+
+            const allOrders = JSON.parse(localStorage.getItem(STORAGE_ORDERS)) || [];
+            const userOrders = allOrders.filter(o => o.user === username).reverse();
+            renderUserOrderTable(userOrders);
+
+            document.getElementById('user-history-modal').style.display = 'block';
+        }
+        
+        function renderUserTopupTable(topups) { /* ... HTML generation code ... */
+            const table = document.getElementById('user-topup-table');
+             let html = `<thead><tr><th>Date</th><th>Amount</th><th>Proof</th><th>Status</th></tr></thead><tbody>`;
+            if (topups.length === 0) {
+                 html += `<tr><td colspan='4' style='text-align:center;'>Top-up မှတ်တမ်း မရှိပါ</td></tr>`;
+            } else {
+                topups.forEach(t => {
+                    const statusColor = t.status === "Approved" ? "green" : t.status === "Pending" ? "orange" : "red";
+                    html += `
+                        <tr>
+                            <td><small>${new Date(t.id).toLocaleDateString()}</small></td>
+                            <td>${t.amount.toLocaleString()} Ks</td>
+                            <td><a href="${t.proof}" target="_blank" style="color:blue;">View Proof</a></td>
+                            <td style="color:${statusColor}; font-weight:bold;">${t.status}</td>
+                        </tr>
+                    `;
+                });
+            }
+            html += `</tbody>`;
+            table.innerHTML = html;
+        }
+
+        function renderUserOrderTable(orders) { /* ... HTML generation code ... */
+            const table = document.getElementById('user-order-table');
+             let html = `<thead><tr><th>Date</th><th>Service</th><th>Price</th><th>Link</th></tr></thead><tbody>`;
+            if (orders.length === 0) {
+                 html += `<tr><td colspan='4' style='text-align:center;'>Order မှတ်တမ်း မရှိပါ</td></tr>`;
+            } else {
+                orders.forEach(o => {
+                    html += `
+                        <tr>
+                            <td><small>${new Date(o.id).toLocaleDateString()}</small></td>
+                            <td>${o.desc}</td>
+                            <td>${o.price}</td>
+                            <td><a href="${o.link}" target="_blank" style="color:blue;">View Link</a></td>
+                        </tr>
+                    `;
+                });
+            }
+            html += `</tbody>`;
+            table.innerHTML = html;
+        }
+
+        function closeUserHistoryModal() { // Works
+            document.getElementById('user-history-modal').style.display = 'none';
+        }
+
+        // --- Topup and Order Management (Buttons work) ---
+        
+        function loadTopupRequests() {
+            const tbody = document.getElementById('topup-table-body');
+            tbody.innerHTML = "";
+            let topups = JSON.parse(localStorage.getItem(STORAGE_TOPUPS)) || [];
+
+            const pendingTopups = topups.filter(t => t.status === "Pending").reverse();
+
+            if(pendingTopups.length === 0) {
+                tbody.innerHTML = "<tr><td colspan='4' style='text-align:center; padding:10px;'>လက်ကျန်ငွေ ဖြည့်သွင်းရန် တောင်းဆိုမှု မရှိပါ</td></tr>";
+                return;
+            }
+
+            pendingTopups.forEach((t) => {
+                const row = `
+                    <tr>
+                        <td>${t.user}</td>
+                        <td><b>${t.amount.toLocaleString()} Ks</b></td>
+                        <td><a href="${t.proof}" target="_blank" style="color:blue;">Link</a></td>
+                        <td>
+                            <button onclick="approveTopup(${t.id}, ${t.amount}, '${t.user}')" style="color:green; cursor:pointer; background:none; border:1px solid green; padding:5px;">✔ Approve</button>
+                            <button onclick="rejectTopup(${t.id})" style="color:red; cursor:pointer; margin-left:10px; background:none; border:1px solid red; padding:5px;">✖ Reject</button>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+        
+        function approveTopup(id, amount, username) { // Works
+            let topups = JSON.parse(localStorage.getItem(STORAGE_TOPUPS));
+            let users = JSON.parse(localStorage.getItem(STORAGE_USERS));
+            
+            const topupIndex = topups.findIndex(t => t.id === id);
+            const userIndex = users.findIndex(u => u.u === username);
+
+            if (topupIndex !== -1 && userIndex !== -1) {
+                
+                users[userIndex].balance += amount; 
+                localStorage.setItem(STORAGE_USERS, JSON.stringify(users));
+                
+                let currentUser = JSON.parse(localStorage.getItem('super_user'));
+                if(currentUser && currentUser.u === username) {
+                     currentUser.balance = users[userIndex].balance;
+                     localStorage.setItem('super_user', JSON.stringify(currentUser));
+                }
+                
+                topups[topupIndex].status = "Approved";
+                localStorage.setItem(STORAGE_TOPUPS, JSON.stringify(topups)); 
+                
+                alert(`${username} ရဲ့ Wallet ထဲကို ${amount.toLocaleString()} Ks ချက်ချင်း ထည့်ပေးပြီးပါပြီ။`);
+                loadAdminData();
+            } else {
+                 alert("User သို့မဟုတ် Topup တောင်းဆိုမှုကို ရှာမတွေ့ပါ!");
+            }
+        }
+        
+        function rejectTopup(id) { // Works
+             if(confirm("တောင်းဆိုမှုကို ပယ်ချပြီး ဖျက်မှာ သေချာပါသလား?")) {
+                let topups = JSON.parse(localStorage.getItem(STORAGE_TOPUPS));
+                const index = topups.findIndex(t => t.id === id);
+                if (index !== -1) {
+                    topups[index].status = "Rejected"; // Change status instead of splice for history
+                    localStorage.setItem(STORAGE_TOPUPS, JSON.stringify(topups));
+                    loadAdminData();
+                }
+            }
+        }
+
+        function loadSalesOrders() {
+            const tbody = document.getElementById('order-table-body');
+            tbody.innerHTML = "";
+            const orders = JSON.parse(localStorage.getItem(STORAGE_ORDERS)) || [];
+            
+            orders.reverse().forEach((o) => {
+                const statusBadge = `<span class="badge bg-done" style="background:#d4edda; color:#157341; padding:5px 10px; border-radius:4px;">${o.status}</span>`;
+
+                const row = `
+                    <tr>
+                        <td><small>${new Date(o.id).toLocaleDateString()}</small><br>#${o.id.toString().slice(-4)}</td>
+                        <td><b>${o.user}</b><br>${o.phone || 'N/A'}</td>
+                        <td>${o.desc}<br><b>${o.price}</b></td>
+                        <td><a href="${o.link}" target="_blank" style="color:blue;">Open Link</a></td>
+                        <td>${statusBadge}</td>
+                        <td>
+                            <button onclick="deleteOrder(${o.id})" style="color:red; cursor:pointer; background:none; border:1px solid red; padding:5px;">✖ Del</button>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+        
+        function deleteOrder(id) { // Works
+            if(confirm("Order မှတ်တမ်းကို ဖျက်မှာ သေချာလား?")) {
+                let orders = JSON.parse(localStorage.getItem(STORAGE_ORDERS));
+                const index = orders.findIndex(o => o.id === id);
+                if (index !== -1) {
+                    orders.splice(index, 1);
+                    localStorage.setItem(STORAGE_ORDERS, JSON.stringify(orders));
+                    loadSalesOrders();
+                }
+            }
+        }
+
+        // --- Service Management Logic (Buttons work) ---
+        
+        function savePkgs() {
+            localStorage.setItem(STORAGE_PACKAGES, JSON.stringify(pkgs));
+            initPlatformSelect(); 
+        }
+
+        function loadServiceTable() {
+            pkgs = JSON.parse(localStorage.getItem(STORAGE_PACKAGES)) || pkgs;
+            const tbody = document.getElementById('service-table-body');
+            tbody.innerHTML = "";
+            
+            if (Object.keys(pkgs).length === 0) {
+                 tbody.innerHTML = "<tr><td colspan='3' style='text-align:center; padding:10px;'>Service များ မရှိသေးပါ</td></tr>";
+                 return;
+            }
+
+            for (const serviceName in pkgs) {
+                const packageCount = pkgs[serviceName].length;
+                const row = `
+                    <tr>
+                        <td><b>${serviceName}</b></td>
+                        <td>${packageCount}</td>
+                        <td>
+                            <button onclick="showServiceForm('${serviceName}')" style="color:#007bff; cursor:pointer; background:none; border:1px solid #007bff; padding:5px; margin-right:5px;">
+                                <i class="fas fa-edit"></i> Edit Name
+                            </button>
+                            <button onclick="managePackages('${serviceName}')" style="color:#000000; cursor:pointer; background:none; border:1px solid #000000; padding:5px; margin-right:5px;">
+                                <i class="fas fa-box"></i> Packages
+                            </button>
+                            <button onclick="deleteService('${serviceName}')" style="color:red; cursor:pointer; background:none; border:1px solid red; padding:5px;">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            }
+        }
+        
+        function showServiceForm(serviceName = null) { // Works
+            document.getElementById('service-name').value = serviceName || '';
+            document.getElementById('original-service-name').value = serviceName || '';
+            
+            if (serviceName) {
+                document.getElementById('service-modal-title').innerText = `Service "${serviceName}" ကို ပြင်ဆင်ရန်`;
+                document.getElementById('service-submit-btn').innerText = 'Update Service';
+            } else {
+                document.getElementById('service-modal-title').innerText = 'Service အသစ်ထည့်ရန်';
+                document.getElementById('service-submit-btn').innerText = 'Save Service';
+            }
+            document.getElementById('service-modal').style.display = 'block';
+        }
+
+        function closeServiceModal() { // Works
+            document.getElementById('service-modal').style.display = 'none';
+        }
+        
+        function handleServiceForm(e) { // Works
+            e.preventDefault();
+            const newName = document.getElementById('service-name').value.trim();
+            const originalName = document.getElementById('original-service-name').value.trim();
+
+            if (newName === '') return alert("Service Name ကို ဖြည့်သွင်းပါ။");
+
+            if (originalName && originalName !== newName) {
+                // Rename existing service
+                if (pkgs[newName]) return alert(`Service "${newName}" သည် ရှိပြီးသားဖြစ်ပါသည်။`);
+                pkgs[newName] = pkgs[originalName];
+                delete pkgs[originalName];
+                alert(`Service "${originalName}" မှ "${newName}" သို့ အောင်မြင်စွာ ပြောင်းလဲပြီးပါပြီ။`);
+            } else if (!originalName) {
+                // Add new service
+                if (pkgs[newName]) return alert(`Service "${newName}" သည် ရှိပြီးသားဖြစ်ပါသည်။`);
+                pkgs[newName] = [];
+                alert(`Service "${newName}" ကို အောင်မြင်စွာ ထည့်သွင်းပြီးပါပြီ။`);
+            }
+            
+            savePkgs();
+            loadServiceTable();
+            closeServiceModal();
+        }
+
+        function deleteService(serviceName) { // Works
+            if (confirm(`Service "${serviceName}" နှင့် ၎င်း၏ Packages များအားလုံးကို ဖျက်မှာ သေချာပါသလား?`)) {
+                delete pkgs[serviceName];
+                savePkgs();
+                loadServiceTable();
+                alert(`Service "${serviceName}" ကို ဖျက်လိုက်ပါပြီ။`);
+            }
+        }
+        
+        // --- Package CRUD (Buttons work) ---
+
+        function managePackages(serviceName) { // Works
+            currentServiceToManage = serviceName;
+            document.getElementById('package-modal-title').innerText = `${serviceName} အတွက် Packages များ`;
+            renderPackagesList(serviceName);
+            document.getElementById('package-modal').style.display = 'block';
+        }
+        
+        function closePackageModal() { // Works
+            document.getElementById('package-modal').style.display = 'none';
+            currentServiceToManage = null;
+        }
+
+        function renderPackagesList(serviceName) {
+            const listDiv = document.getElementById('packages-list');
+            listDiv.innerHTML = '';
+            const packages = pkgs[serviceName] || [];
+
+            if (packages.length === 0) {
+                listDiv.innerHTML = "<p style='text-align:center;'>ဤ Service အတွက် Package များ မရှိသေးပါ</p>";
+                return;
+            }
+
+            packages.forEach((pkg, index) => {
+                const item = document.createElement('div');
+                item.className = 'package-item';
+                item.innerHTML = `
+                    <div style="font-size:0.85rem;">
+                        <span style="font-size:1rem; font-weight:bold;">${pkg.n}</span> (<span style="color:red;">${pkg.p.toLocaleString()} Ks</span>)<br>
+                        <small style="color:#6c757d;">ID: ${pkg.id}</small>
+                    </div>
+                    <div>
+                        <button onclick="openEditPackageModal('${serviceName}', ${index})" style="color:#007bff; cursor:pointer; background:none; border:1px solid #007bff; padding:3px 8px; margin-right:5px;">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button onclick="deletePackage('${serviceName}', ${index})" style="color:red; cursor:pointer; background:none; border:1px solid red; padding:3px 8px;">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                listDiv.appendChild(item);
+            });
+        }
+
+        function addPackage(e) { // Works
+            e.preventDefault();
+            const pkgName = document.getElementById('package-name').value.trim();
+            const pkgPrice = parseInt(document.getElementById('package-price').value);
+            
+            if (!pkgName || isNaN(pkgPrice) || pkgPrice < 100) {
+                return alert("Package Name နှင့် မှန်ကန်သော ဈေးနှုန်း ဖြည့်ပါ။");
+            }
+            
+            let newUUID = generateUUID();
+            while (isUUIDDuplicateGlobally(newUUID)) {
+                newUUID = generateUUID();
+            }
+
+            if (currentServiceToManage && pkgs[currentServiceToManage]) {
+                pkgs[currentServiceToManage].push({ n: pkgName, p: pkgPrice, id: newUUID });
+                savePkgs();
+                renderPackagesList(currentServiceToManage);
+                document.getElementById('package-name').value = '';
+                document.getElementById('package-price').value = '';
+                loadServiceTable(); 
+            } else {
+                alert("Service ကို အရင်ရွေးချယ်ပါ!");
+            }
+        }
+        
+        function isUUIDDuplicateGlobally(uuid) {
+            for (const svc in pkgs) {
+                if (pkgs[svc].some(p => p.id === uuid)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function deletePackage(serviceName, index) { // Works
+            if (confirm(`Package: "${pkgs[serviceName][index].n}" ကို ဖျက်မှာ သေချာလား?`)) {
+                pkgs[serviceName].splice(index, 1);
+                savePkgs();
+                renderPackagesList(serviceName);
+                loadServiceTable(); 
+            }
+        }
+        
+        // --- Edit Package Modal Logic (Buttons work) ---
+        
+        function openEditPackageModal(serviceName, index) { // Works
+            const pkg = pkgs[serviceName][index];
+            
+            document.getElementById('edit-service-name').value = serviceName;
+            document.getElementById('edit-package-index').value = index;
+            document.getElementById('edit-original-uuid').value = pkg.id;
+            
+            document.getElementById('edit-package-uuid').value = pkg.id;
+            document.getElementById('edit-package-name').value = pkg.n;
+            document.getElementById('edit-package-price').value = pkg.p;
+            
+            document.getElementById('edit-package-modal').style.display = 'block';
+        }
+
+        function closeEditPackageModal() { // Works
+            document.getElementById('edit-package-modal').style.display = 'none';
+        }
+
+        function saveEditedPackage(e) { // Works
+            e.preventDefault();
+            const serviceName = document.getElementById('edit-service-name').value;
+            const index = parseInt(document.getElementById('edit-package-index').value);
+            const originalUUID = document.getElementById('edit-original-uuid').value;
+            
+            const newUUID = document.getElementById('edit-package-uuid').value.trim();
+            const newName = document.getElementById('edit-package-name').value.trim();
+            const newPrice = parseInt(document.getElementById('edit-package-price').value);
+            
+            if (!newUUID || !newName || isNaN(newPrice) || newPrice < 100) {
+                return alert("Package အချက်အလက်များကို ပြည့်စုံစွာ ဖြည့်ပါ။");
+            }
+            
+            // Check for duplicate UUID unless it's the original one
+            if (newUUID !== originalUUID) {
+                if (isUUIDDuplicateGlobally(newUUID)) {
+                    return alert("Package ID သည် ရှိပြီးသားဖြစ်ပါသည်။ တခြား ID ရွေးပါ။");
+                }
+            }
+
+            pkgs[serviceName][index] = { 
+                id: newUUID,
+                n: newName, 
+                p: newPrice 
+            };
+            
+            savePkgs();
+            renderPackagesList(serviceName);
+            closeEditPackageModal();
+            alert(`Package "${newName}" ကို အောင်မြင်စွာ ပြင်ဆင်ပြီးပါပြီ။`);
+        }
+
+        // --- Initialization Block ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Re-check for missing IDs in existing data during initialization
+            let shouldSave = false;
+            for (const svc in pkgs) {
+                pkgs[svc].forEach(pkg => {
+                    if (!pkg.id) {
+                        pkg.id = generateUUID();
+                        shouldSave = true;
+                    }
+                });
+            }
+            if (!localStorage.getItem(STORAGE_PACKAGES) || shouldSave) {
+                localStorage.setItem(STORAGE_PACKAGES, JSON.stringify(pkgs));
+            }
+            
+            initPlatformSelect(); 
+            
+            if (localStorage.getItem('admin_logged_in') === 'true') {
+                showAdminView(); 
+            } else {
+                showCustomerView(); 
+            }
+        });
+
+    </script>
+</body>
+</html>
